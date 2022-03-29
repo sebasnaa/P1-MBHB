@@ -1,13 +1,13 @@
 import itertools
 import math
-import matplotlib.pyplot as plt
+
 import numpy as np
 import random
 import time
 
 from random import randint
 from numpy import genfromtxt
-from math import log
+
 
 
 
@@ -108,16 +108,16 @@ def estado_inicial_random():
     for indice in range(16):
         suma = np.array(random_list).sum()
 
-        multiplicador = 218 - suma
+        multiplicador = 219 - suma
         aux = random_list[indice] * multiplicador
 
-        if (aux > 50):
-            aux = np.random.uniform(0, 50, 1)
+        if (aux > 40):
+            aux = np.random.uniform(0, 20, 1)
 
         random_list[indice] = aux
 
     random_list_rounded = np.round(random_list)
-    slot_random = inicializar_greedy(random_list_rounded, 218)
+    slot_random = inicializar_greedy(random_list_rounded, 220)
     return slot_random
 
 def inicializar_greedy(solucionInicial,limite_bicicletas):
@@ -127,17 +127,12 @@ def inicializar_greedy(solucionInicial,limite_bicicletas):
 
     solucionInicial = np.array(solucionInicial)
     salida = solucionInicial*multiplicador
-
-    salida = np.array(salida).round()
-    return salida
-
-
-    # salida_floor = np.floor(salida)
-    # salida_ceil = np.ceil(salida)
-    # if(np.array(salida_ceil).sum() < limite_bicicletas):
-    #     return salida_ceil
-    # if(np.array(salida_floor).sum() < limite_bicicletas):
-    #     return salida_floor
+    salida_floor = np.floor(salida)
+    salida_ceil = np.ceil(salida)
+    if(np.array(salida_ceil).sum() < limite_bicicletas):
+        return salida_ceil
+    if(np.array(salida_floor).sum() < limite_bicicletas):
+        return salida_floor
 
 def generar_vecinos_no_offset(solucion_actual,limite_vecinos,granularidad):
 
@@ -161,7 +156,8 @@ def generar_vecinos_no_offset(solucion_actual,limite_vecinos,granularidad):
 
 def generar_vecinos_con_offset(solucion_actual, limite_vecinos, granularidad):
     vecinos_generados = []
-    orden_numerico = np.arange(0, solucion_actual.shape[0])
+    movimientos_realizados = []
+    orden_numerico = np.arange(0,solucion_actual.shape[0])
     lista_permutaciones_posibles = itertools.permutations(orden_numerico, 2)
     lista_permutaciones_posibles = list(lista_permutaciones_posibles)
 
@@ -176,17 +172,24 @@ def generar_vecinos_con_offset(solucion_actual, limite_vecinos, granularidad):
         indiceB = lista_permutaciones_posibles[i][1]
         aux = solucion_actual.copy()
         if aux[indiceA] > granularidad:
+            valorA = aux[indiceA]
+            valorB = aux[indiceB]
             aux[indiceA] -= granularidad
             aux[indiceB] += granularidad
+
         elif aux[indiceB] > granularidad:
+            valorA = aux[indiceA]
+            valorB = aux[indiceB]
             aux[indiceA] += granularidad
             aux[indiceB] -= granularidad
 
+        elem_lista = [(indiceA,valorA),(indiceB,valorB)]
+        movimientos_realizados.append(elem_lista)
         vecinos_generados.append(aux)
         i += 1
         if i == tam:
             break
-    return vecinos_generados
+    return vecinos_generados,movimientos_realizados
 
 
 
@@ -209,17 +212,6 @@ def generar_vecinos_random(slots,valor_cambio):
             modificado = True
     return slots
 
-def temperatura_inicial(coste_inicial):
-    t = 0
-    a = 0.5
-    b = 0.6
-
-    t = a/(-log(b))
-    t=t*coste_inicial
-    return t
-
-
-
 def coste_slot(slot_por_estaciones):
     # Ajustamos el vector de slots al primer movimiento que tenemos que cubrir
     distanciaTotal = 0
@@ -241,16 +233,91 @@ def coste_slot(slot_por_estaciones):
         while out != 0:
             bicis_res, estacion_sig, distancia_aux = estacion_cercana(estacion, out,bicicletas_disponibles,huecos_disponibles)
             out, bicicletas_disponibles, huecos_disponibles = (accion_posible(bicis_res, estacion_sig,bicicletas_disponibles,huecos_disponibles))
+
             tmp = abs(bicis_res) - abs(out)
             distanciaTotal = distanciaTotal + distancia_aux*tmp
 
     return distanciaTotal
 
 
+def existe_movimiento_tabu(lista_tabu,movimiento_actual):
+    for par in lista_tabu:
+        if movimiento_actual[0] == par[0] or movimiento_actual[0] == par[1] or movimiento_actual[1] == par[0] or movimiento_actual[1] == par[1]:
+            return True
+
+    return False
+
+def reducir_tiempo_lista_tabu(lista_tabu):
+
+    for par in lista_tabu:
+        par[2] -=1
+
+    for par in lista_tabu:
+        if par[2] == 0:
+            lista_tabu.remove(par)
 
 
+    return lista_tabu
+
+def agregar_lista_tabu(lista_tabu,movimiento_actual,longitud_lista_tabu_limite,duracion,indice_agregacion):
+
+    if len(lista_tabu) == longitud_lista_tabu_limite:
+        aux = movimiento_actual.copy()
+        aux.append(duracion)
+        lista_tabu[indice_agregacion] = aux
+        indice_agregacion += 1
+        indice_agregacion = indice_agregacion % longitud_lista_tabu_limite
+    else:
+        aux = movimiento_actual.copy()
+        aux.append(duracion)
+        lista_tabu.append(aux)
+        indice_agregacion += 1
+        indice_agregacion = indice_agregacion % longitud_lista_tabu_limite
 
 
+    return lista_tabu,indice_agregacion
+
+
+def actualizar_tabla_frecuencias(lista_frecuencias,s_act):
+    valor_limite = 39
+    for i in range(0,16):
+        valor = s_act[i]
+        if valor > valor_limite:
+            indice_insercion = 7
+        else:
+            indice_insercion = np.floor(valor / 5)
+
+        lista_frecuencias[i][int(indice_insercion)] = lista_frecuencias[i][int(indice_insercion)] + 1
+    return lista_frecuencias
+
+
+def calcular_inversa(lista_valores):
+    solucion = []
+    for indice,valor in enumerate(lista_valores):
+        if valor > 0:
+            solucion.append(1/valor)
+        else:
+            solucion.append(0)
+    return solucion
+
+def greddy_tabu(lista_frecuencias):
+    solucion = []
+    for estacion in range(0,16):
+        inversa = calcular_inversa(lista_frecuencias[estacion])
+        suma_inversa = np.array(inversa).sum()
+        divisiones = inversa / suma_inversa
+        aleatorio = random.uniform(0,1)
+        suma = 0
+        for indice,valor in enumerate(divisiones):
+            # print(indice , " ",valor)
+            suma += valor
+            if aleatorio < suma:
+                inf = 5*indice
+                sup = inf + 4
+                nuevo_dato = random.randint(inf,sup)
+                solucion.append(nuevo_dato)
+                break
+    return solucion
 
 
 
@@ -273,119 +340,113 @@ accionesMod = np.delete(accionesMod, 0, 0)
 
 lista_acciones = modificar_datos_acciones(accionesMod*2)
 
-minimos = []
+coste_maximo = math.inf
+
 
 ################## Inicializar variables bucles
-
+iteraciones = 0
 #Se genera la solucion actual inicial
-# s_actual = np.array([39, 25, 10, 14, 10, 11, 4, 5, 14, 8, 25, 27, 2, 9, 6, 11] )
-
-media_aceptados = 0
-minima_solucion_coste = 99999999999999999999999
-minima_solucion_slots = []
-for seed in range(5):
-    total_comprobados = 0
-    total_aceptados = 0
-    # s_actual = greedy_inicializar(16, 220)
-    s_actual = np.array([39, 25, 10, 14, 10, 11, 4, 5, 14, 8, 25, 27, 2, 9, 6, 11])
+s_act = np.array([39, 25, 10, 14, 10, 11, 4, 5, 14, 8, 25, 27, 2, 9, 6, 11])
+# s_act = greedy_inicializar(16, 220)
 
 
+bicicletas_disponibles = np.zeros(s_act.size)
+huecos_disponibles = s_act - bicicletas_disponibles
+coste_minimo = coste_slot(s_act)
+coste_s_act = coste_minimo
+solucion_minima = s_act.copy()
+start_time = time.time()
 
-    # s_actual = estado_inicial_random()
-    # np.random.shuffle(s_actual)
 
-    bicicletas_disponibles = np.zeros(s_actual.size)
+# posicion valor
+# van de dos en dos
 
-    coste_minimo = coste_slot(s_actual)
-    mejor_solucion = s_actual.copy()
-    start_time = time.time()
+movimiento_mejor_vecino = []
+mejor_vecino = []
 
-    temperatura_ini  = temperatura_inicial(coste_minimo)
-    iteraciones = 0
+lista_tabu = []
+longitud_lista_tabu_limite = 2
+duracion = 3
+indice_agregacion = 0
+lista_frecuencias = np.zeros([16,8])
+
+
+print("##Coste solucion inicial ", coste_s_act)
+
+while iteraciones < 4000:
+
+    if iteraciones % 1000 == 0 and iteraciones > 0:
+        r = random.uniform(0,1)
+        if(r < 0.25):
+            # reinicializar completo
+            print("primero")
+            s_act = greedy_inicializar(16, 220)
+            coste_minimo = coste_slot(s_act)
+            coste_s_act = coste_minimo
+        if(r >= 0.25 and r < 0.75):
+            print("segundo")
+            s_act = greddy_tabu(lista_frecuencias)
+        if(r >= 0.75):
+            print("terceo")
+            s_act = solucion_minima.copy()
+            coste_minimo = coste_slot(s_act)
+            coste_s_act = coste_minimo
+    s_act = np.array(s_act)
+    vecinos,movimientos = generar_vecinos_con_offset(s_act,10,1 )
+    s_act = vecinos[0].copy()
+    movimiento_actual = movimientos[0]
     k = 0
-    numero_mejoras = []
-    eje_y = []
-    eje_x = []
-    numero_aceptados = []
-    array_temperaturas = []
-    temperatura = temperatura_ini
+    # print("Coste interno iteracion #",iteraciones ,"  " , coste_slot(s_act))
+    # print("Lista tabu " , lista_tabu)
+    for v in vecinos:
 
-    # condicion de parada
-    while iteraciones in range(80):
-        # print("#", iteraciones , " temperatura " , temperatura)
-        # Condicion de enfriamiento numero de enfriamientos que se haran por jemplo 20 descensos
-        # se realiza cuando se han comprobado los vecinos sin importar si se han aceptado o no
-        eje_x.append(iteraciones)
-        eje_y.append(temperatura)
-        array_temperaturas.append(temperatura)
-        sumatorio = 0
-        for ite_v_enfriamiento in range(20):
-            total_comprobados+= 1
-            # vecinos = generar_vecinos_no_offset(slot_por_estaciones,120,2)
-            vecinos = generar_vecinos_con_offset(s_actual,1,3)
-            s_cand = vecinos[0]
+        s_cand = v.copy()
+        bicicletas_disponibles = np.zeros(s_cand.size)
+        huecos_disponibles = s_cand - bicicletas_disponibles
+        coste_cand = coste_slot(s_cand)
+        if coste_cand < coste_slot(s_act):
+            s_act = s_cand
+            movimiento_actual = movimientos[k]
 
-            coste_s_actual = coste_slot(s_actual)
-            coste_s_cand = coste_slot(s_cand)
-            diff = (coste_s_cand - coste_s_actual)
-            # diff = round(diff, 2)
-            # temperatura = round(temperatura, 2)
-            # print( " .............................  ", diff  , "   " , temperatura)
+        #criterio de aspiracion, es mejor el vecino que la solucion_mejor,
+        # no se tiene en cuenta que estuviera en la lista_tabu no importa
+        if coste_cand < coste_minimo:
+            solucion_minima = s_cand.copy()
+            s_act = s_cand.copy()
+            movimiento_actual = movimientos[k].copy()
+            # print("         mejoro coste, cumplo criterio de aspiracion", movimiento_actual ,  " coste anterior " , coste_minimo  , " coste " , coste_cand)
+            coste_minimo = coste_cand
 
-            criterio =  np.exp(-diff/temperatura)
-            probabilidad  = random.uniform(0,1)
-            # print( "ite ",ite_v_enfriamiento , " criterio " , criterio , " probabilidad " , probabilidad)
-            if(probabilidad < criterio or diff < 0):
-                s_actual = s_cand
-                sumatorio+=1
-                total_aceptados+=1
-                # print("Aceptp solucion " , " coste actual " ,coste_s_actual , " coste candidato " , coste_s_cand )
-                if(coste_s_cand < coste_minimo):
-                    coste_minimo = coste_s_cand
-                    mejor_solucion = s_cand.copy()
-                    if(coste_minimo < minima_solucion_coste):
-                        minima_solucion_coste = coste_minimo
-                        minima_solucion_slots = s_cand.copy()
 
-        numero_aceptados.append(sumatorio)
+        if not existe_movimiento_tabu(lista_tabu,movimiento_actual):
+            if coste_cand < coste_s_act:
+                # print("         mejoro coste  y no estoy en lista tabu " , movimiento_actual)
+                movimiento_actual = movimientos[k].copy()
+                s_act = s_cand.copy()
+
+
         k+=1
-        temperatura = temperatura_ini / (1+k)
+    # print("mejor de los vecinos " , mejor_vecino , " mov ",movimiento_actual )
+    # print("++agrego en lista tabu++")
+    lista_tabu,indice_agregacion = agregar_lista_tabu(lista_tabu,movimiento_actual,longitud_lista_tabu_limite,duracion, indice_agregacion)
+    actualizar_tabla_frecuencias(lista_frecuencias,s_act)
+    lista_tabu = reducir_tiempo_lista_tabu(lista_tabu)
+    iteraciones+=1
+    print("#",iteraciones)
 
-        # temperatura = 0.95*temperatura
-        iteraciones+=1
-
-
-    print(mejor_solucion , "coste mejor ",coste_minimo , "--- %s seconds ---" % (time.time() - start_time))
-    # minimos.append(coste_minimo)
-    print(" total comprobados  ", total_comprobados , " total aceptados ", total_aceptados , " porcentaje aceptados " , (total_aceptados/total_comprobados)*100,"%")
-    media_aceptados+=(total_aceptados/total_comprobados)*100
-
-print("coste " , minima_solucion_coste , " slots " , minima_solucion_slots,  "  " , np.array(minima_solucion_slots).sum())
-print(media_aceptados/5)
-
-# print(np.array(minimos).min())
-
-# eje_x = np.array(eje_x)
-# eje_y = np.array(eje_y)
-# # # print(eje_y)
-# # print(eje_x)
-# plt.plot(eje_x,eje_y)
-# plt.show()
-
-#
-# print(np.array(array_temperaturas))
-# print(np.array(numero_aceptados))
-#
-# intervalos = range(min(numero_aceptados), max(numero_aceptados) + 1)
-# plt.hist(numero_aceptados, intervalos,rwidth=0.9)
-# plt.title('  Aceptaciones/Temperatura ')
-# plt.xlabel('numero aceptados')
-# plt.ylabel('Temperatura')
-# plt.xticks(intervalos)
+print(" solucion mejor " , solucion_minima , " coste ", coste_minimo , "--- %s seconds ---" % (time.time() - start_time))
 
 
-# plt.plot(numero_aceptados,array_temperaturas)
-# plt.xlabel(' Aceptados')
-# plt.ylabel('Tempratura')
-# plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
 

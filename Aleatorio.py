@@ -49,10 +49,15 @@ def inicializar_greedy(solucionInicial,limite_bicicletas):
     salida = solucionInicial*multiplicador
     salida_floor = np.floor(salida)
     salida_ceil = np.ceil(salida)
-    if(np.array(salida_ceil).sum() < limite_bicicletas):
-        return salida_ceil
-    if(np.array(salida_floor).sum() < limite_bicicletas):
-        return salida_floor
+
+    salida = np.array(salida).round()
+    return salida
+
+
+    # if(np.array(salida_ceil).sum() < limite_bicicletas):
+    #     return salida_ceil
+    # if(np.array(salida_floor).sum() < limite_bicicletas):
+    #     return salida_floor
 
 
 def greedy_inicializar(dimension,limite_elementos):
@@ -163,7 +168,7 @@ def generar_vecinos_random(slots,valor_cambio):
 
 ################## Inicializar variables
 
-numero_semillas = 1
+
 
 indices = genfromtxt('datos/cercanas_indices.csv', delimiter=',')
 indicesMod = np.delete(indices, 0, 0)
@@ -178,11 +183,22 @@ accionesMod = np.delete(accionesMod, 0, 0)
 
 lista_acciones = modificar_datos_acciones(accionesMod*2)
 
+numero_semillas = 1
+coste_minimo = 99999999999999999999999999
+start_time = time.time()
 for indice_semilla in range(numero_semillas):
 
-    slot_por_estaciones = np.array([39, 25, 10, 14, 10, 11, 4, 5, 14, 8, 25, 27, 2, 9, 6, 11]) #greedy_inicializar(16, 220)
+    # [17. 12. 20. 20. 20. 14.  9. 12. 11. 14. 12. 23.  2.  9. 12. 13.]    coste    mejor    369.2210797034451
 
+    # slot_por_estaciones = inicializar_greedy([5,7,13,6,8,13,8,9,6,10,10,18,8,13,15,14],220)
+    # bicicletas_disponibles = [5, 7, 13, 6, 8, 13, 8, 9, 6, 10, 10, 18, 8, 13, 15, 14]
+
+
+    # print("saldia ",slot_por_estaciones)
+    slot_por_estaciones = np.array([18, 12, 19, 15, 20, 14, 12, 10, 12, 14, 16, 24,  2,  7, 18, 12,])
+    # slot_por_estaciones = greedy_inicializar(16, 220)
     bicicletas_disponibles = np.zeros(slot_por_estaciones.size)
+
     huecos_disponibles = slot_por_estaciones - bicicletas_disponibles
     distanciaTotal = 0
 
@@ -207,4 +223,9 @@ for indice_semilla in range(numero_semillas):
             tmp = abs(bicis_res) - abs(out)
             distanciaTotal = distanciaTotal + distancia_aux*tmp
 
-    print("\n semilla #" , indice_semilla, distanciaTotal , slot_por_estaciones)
+    # print(" distancia " , distanciaTotal)
+    if(distanciaTotal < coste_minimo):
+        coste_minimo = distanciaTotal
+    #print("\n semilla #" , indice_semilla, distanciaTotal , slot_por_estaciones)
+
+print(" distancia minima " , coste_minimo , " --- %s seconds ---" % (time.time() - start_time))
