@@ -195,7 +195,7 @@ for indice_semilla in range(numero_semillas):
 
 
     # print("saldia ",slot_por_estaciones)
-    slot_por_estaciones = np.array([18, 12, 19, 15, 20, 14, 12, 10, 12, 14, 16, 24,  2,  7, 18, 12,])
+    slot_por_estaciones = np.array([36,7,16,12,12,5,18,18,11,15,24,23,29,8,36,33])
     # slot_por_estaciones = greedy_inicializar(16, 220)
     bicicletas_disponibles = np.zeros(slot_por_estaciones.size)
 
