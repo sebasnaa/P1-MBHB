@@ -1,0 +1,39 @@
+semilla # 0 649,2710798373178 [36, 10, 12,  7, 17, 15, 14,  8,  9, 17,  8, 18, 13, 12, 13, 11,]
+
+semilla # 1 632,9893708954033 [27, 10, 10, 18,  9, 15, 15, 15, 14, 10, 17, 13, 13, 14,  9, 11,]
+
+semilla # 2 490,8957427325139 [25, 15,  9, 10, 14, 12, 15, 14,  9, 14, 15, 12,  9, 15, 18, 14,]
+
+semilla # 3 511,2417642189658 [27, 12,  9, 13, 12, 18, 22, 16, 11,  9,  7, 12, 11, 11, 12, 18,]
+
+semilla # 4 537,3053480609043 [26, 15, 12,  9,  9, 12, 13, 10, 24, 15,  9, 14, 12, 11, 12, 17,]
+
+
+Busqueda Local
+ Paso = 2 lotes = 20
+semilla # 0 [18 12 20 23 19 13  8 12 11 15 12 24  3 12  5 13] coste mejor  374.3734871956273  mejoras  70 
+semilla # 1 [17 12 20 16 19 13  9 11 12 14 13 23  3 16  9 13] coste mejor  375.66598082350686  mejoras  50
+semilla # 2 [15 11 21 16 20 14  9 12 11 14 13 24  3 11 14 12] coste mejor  375.13574780986795  mejoras  43
+semilla # 3 [17 12 19 35 20 14 10 12 11 15 11 24  3  3  2 12] coste mejor  374.15050189784444  mejoras  68
+semilla # 4 [18 11 18 15 19 14 11 12 10 15 13 24  2 11 14 13] coste mejor  374.96142594958474  mejoras  45
+
+Los 5 casos llegan a puntos similares de donde no consiguen salir óptimos locales
+
+Paso = 1 lotes = 20
+semilla # 0 igual a paso = 1
+semilla # 1 igual a paso = 1
+semilla # 2 igual a paso = 1
+semilla # 3 igual a paso = 1
+semilla # 4 igual a paso = 1
+
+Paso = 3 lotes = 20
+ converguen en minimos locales identicos
+Prueba @ 0 [15 10 21 19 20 15 11 11  9 14 14 24  1 12 10 14]  coste maximo  382.8802586001717  suma slots 220
+Prueba @ 1 [15 10 21 19 20 15 11 11  9 14 14 24  1 12 10 14]  coste maximo  382.8802586001717  suma slots 220
+Prueba @ 2 [16 12 21 16 20 12  9 14 12 14 12 24  3  6 18 11]  coste maximo  377.0429019835143  suma slots 220
+Prueba @ 3 [16 12 21 16 20 12  9 14 12 14 12 24  3  6 18 11]  coste maximo  377.0429019835143  suma slots 220
+Prueba @ 4 [16 12 21 16 20 12  9 14 12 14 12 24  3  6 18 11]  coste maximo  377.0429019835143  suma slots 220
+
+
+Enfriamiento
+ Paso = 1 v_enfriamiento = 20

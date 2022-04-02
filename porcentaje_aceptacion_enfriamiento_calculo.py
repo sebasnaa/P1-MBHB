@@ -211,9 +211,10 @@ def generar_vecinos_random(slots,valor_cambio):
 
 def temperatura_inicial(coste_inicial):
     t = 0
-    a = 0.2928
-    b = 0.25
-    t = a/(-log(b,10))
+    a = 0.3
+    b = 0.09
+
+    t = a/(-log(b))
     t=t*coste_inicial
     return t
 
@@ -284,31 +285,30 @@ minima_solucion_coste = 99999999999999999999999
 minima_solucion_slots = []
 
 seeds = [
-[33,  8,  0, 51, 41,  6, 28, 44,  2,  1,  2,  1,  1,  0,  1,  1,],
-[ 3, 40, 22, 48, 49, 23, 22, 10,  0,  1,  0,  1,  0,  0,  1,  0,],
-[32,  9,  9,  9,  9, 16, 17, 13, 13, 16,  6, 13, 19, 10, 15, 14,],
-[26, 17, 11, 11, 10, 15, 13, 19,  9,  6, 13, 15, 17, 12, 12, 14,],
-[36, 10, 13, 16, 15, 10, 12, 11, 14, 12, 12, 16,  7, 12, 16,  8,]
+[36, 10, 12,  7, 17, 15, 14,  8,  9, 17,  8, 18, 13, 12, 13, 11,],
+[27, 10, 10, 18,  9, 15, 15, 15, 14, 10, 17, 13, 13, 14,  9, 11,],
+[25, 15,  9, 10, 14, 12, 15, 14,  9, 14, 15, 12,  9, 15, 18, 14,],
+[27, 12,  9, 13, 12, 18, 22, 16, 11,  9,  7, 12, 11, 11, 12, 18,],
+[26, 15, 12,  9,  9, 12, 13, 10, 24, 15,  9, 14, 12, 11, 12, 17,]
 ]
 
 
+# for pruebas in range(5):
 
-for seed in range(5):
-    print("seed #", seed)
-    total_evaluaciones = 0
-    # s_actual = greedy_inicializar(16, 220)
+for seed in range(10):
+    total_comprobados = 0
+    total_aceptados = 0
 
+    # s_actual = np.array(seeds[pruebas])
 
+    s_actual = inicializar_solucion_homogenea(16,220)
 
-    # s_actual = inicializar_solucion_homogenea(16,220)
-    # np.random.shuffle(s_actual)
-
-    s_actual = np.array(seeds[0])
+    # s_actual = estado_inicial_random()
+    np.random.shuffle(s_actual)
 
     bicicletas_disponibles = np.zeros(s_actual.size)
 
     coste_minimo = coste_slot(s_actual)
-    print("Coste solucion inicial ", coste_minimo , " ", s_actual)
     mejor_solucion = s_actual.copy()
     start_time = time.time()
 
@@ -331,15 +331,16 @@ for seed in range(5):
         eje_y.append(temperatura)
         array_temperaturas.append(temperatura)
         sumatorio = 0
-        for ite_v_enfriamiento in range(10):
+        for ite_v_enfriamiento in range(1):
+            total_comprobados+= 1
             # vecinos = generar_vecinos_no_offset(slot_por_estaciones,120,2)
-            vecinos = generar_vecinos_con_offset(s_actual,1,2)
+            vecinos = generar_vecinos_con_offset(s_actual,1,1)
             s_cand = vecinos[0]
 
-            coste_s_actual = coste_slot(s_actual)
+            # coste_s_actual = coste_slot(s_actual)
+            coste_s_actual = 574
             coste_s_cand = coste_slot(s_cand)
             diff = (coste_s_cand - coste_s_actual)
-            total_evaluaciones += 2
             # diff = round(diff, 2)
             # temperatura = round(temperatura, 2)
             # print( " .............................  ", diff  , "   " , temperatura)
@@ -350,12 +351,11 @@ for seed in range(5):
             if(probabilidad < criterio or diff < 0):
                 s_actual = s_cand
                 sumatorio+=1
+                total_aceptados+=1
                 # print("Aceptp solucion " , " coste actual " ,coste_s_actual , " coste candidato " , coste_s_cand )
                 if(coste_s_cand < coste_minimo):
-                    # print("Mejoro coste " ,)
                     coste_minimo = coste_s_cand
                     mejor_solucion = s_cand.copy()
-                    # Para cuado hacemos multiples iteraciones comprobar el minimo de todas
                     if(coste_minimo < minima_solucion_coste):
                         minima_solucion_coste = coste_minimo
                         minima_solucion_slots = s_cand.copy()
@@ -367,11 +367,14 @@ for seed in range(5):
         # temperatura = 0.95*temperatura
         iteraciones+=1
 
-    print(mejor_solucion , "coste mejor ",coste_minimo , "--- %s seconds ---" % (time.time() - start_time))
-    print("evalu ", total_evaluaciones)
-print()
-print("coste minimo de seed" , minima_solucion_coste , " slots " , minima_solucion_slots,  "  " , np.array(minima_solucion_slots).sum())
 
+    print(mejor_solucion , "coste mejor ",coste_minimo , "--- %s seconds ---" % (time.time() - start_time))
+    # minimos.append(coste_minimo)
+    print(" total comprobados  ", total_comprobados , " total aceptados ", total_aceptados , " porcentaje aceptados " , (total_aceptados/total_comprobados)*100,"%")
+    media_aceptados+=(total_aceptados/total_comprobados)*100
+
+print("coste " , minima_solucion_coste , " slots " , minima_solucion_slots,  "  " , np.array(minima_solucion_slots).sum())
+print(media_aceptados/10)
 
 # print(np.array(minimos).min())
 

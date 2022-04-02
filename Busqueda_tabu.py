@@ -23,6 +23,7 @@ def modificar_datos_acciones(fichero_acciones):
 
     return salida
 
+
 def accion_posible(bicicletas_input,estacion,bicicletas_en_slots,huecos_disponibles_en_slots):
     # queremos guardar bicis
     # estacion =  estacion -1
@@ -61,6 +62,7 @@ def accion_posible(bicicletas_input,estacion,bicicletas_en_slots,huecos_disponib
         else:
             return bicicletas_input,bicicletas_en_slots,huecos_disponibles_en_slots
 
+
 def estacion_cercana(estacion,bicicletas,bicicletas_en_slots,huecos_disponibles_en_slots):
     estacion_actual = estacion
     bicicletas_input = bicicletas
@@ -93,7 +95,9 @@ def estacion_cercana(estacion,bicicletas,bicicletas_en_slots,huecos_disponibles_
             indice_busqueda+=1
         return bicicletas_input,estacion_siguiente, distancia_Nan
 
-def greedy_inicializar(dimension,limite_elementos):
+
+
+def inicializar_solucion_homogenea(dimension,limite_elementos):
 
     arr = np.zeros(dimension)
     for i in range(limite_elementos):
@@ -101,6 +105,8 @@ def greedy_inicializar(dimension,limite_elementos):
         aux = valor % dimension
         arr[aux] += 1
     return arr
+
+
 
 def estado_inicial_random():
     random_list = np.random.uniform(0, 1, 16)
@@ -171,6 +177,7 @@ def generar_vecinos_con_offset(solucion_actual, limite_vecinos, granularidad):
     i = r % (240 - limite_vecinos + 1)
     tam = limite_vecinos + i
     for v in lista_permutaciones_posibles:
+
         indiceA = lista_permutaciones_posibles[i][0]
         indiceB = lista_permutaciones_posibles[i][1]
         aux = solucion_actual.copy()
@@ -193,7 +200,8 @@ def generar_vecinos_con_offset(solucion_actual, limite_vecinos, granularidad):
             movimientos_realizados.append(elem_lista)
             vecinos_generados.append(aux)
             i += 1
-
+        else:
+            i += 1
         # elem_lista = [(indiceA,valorA),(indiceB,valorB)]
         # movimientos_realizados.append(elem_lista)
         # vecinos_generados.append(aux)
@@ -330,6 +338,15 @@ def greddy_tabu(lista_frecuencias):
                 break
 
     solucion = inicializar_greedy(solucion,220)
+
+    # while(np.array(solucion).sum() > 220):
+    #     r = random.randint(0,15)
+    #     solucion[r] = solucion[r] - 1
+    #
+    # while (np.array(solucion).sum() < 220):
+    #     r = random.randint(0, 15)
+    #     solucion[r] = solucion[r] + 1
+
     return solucion
 
 
@@ -353,20 +370,33 @@ accionesMod = np.delete(accionesMod, 0, 0)
 
 lista_acciones = modificar_datos_acciones(accionesMod*2)
 
+
+
 coste_maximo = math.inf
 
+seeds = [
+[33,  8,  0, 51, 41,  6, 28, 44,  2,  1,  2,  1,  1,  0,  1,  1,],
+[ 3, 40, 22, 48, 49, 23, 22, 10,  0,  1,  0,  1,  0,  0,  1,  0,],
+[32,  9,  9,  9,  9, 16, 17, 13, 13, 16,  6, 13, 19, 10, 15, 14,],
+[26, 17, 11, 11, 10, 15, 13, 19,  9,  6, 13, 15, 17, 12, 12, 14,],
+[36, 10, 13, 16, 15, 10, 12, 11, 14, 12, 12, 16,  7, 12, 16,  8,]
+]
 
 ################## Inicializar variables bucles
 iteraciones = 0
 #Se genera la solucion actual inicial
-# s_act = np.array([39, 25, 10, 14, 10, 11, 4, 5, 14, 8, 25, 27, 2, 9, 6, 11])
-s_act = greedy_inicializar(16, 220)
 
+
+# s_act = np.array([30, 12, 16, 12, 10, 16, 14, 10, 11, 21, 18,  3,  9, 13, 12, 13,])
+
+# s_act = inicializar_solucion_homogenea(16,220)
+
+s_act = np.array(seeds[0])
 
 bicicletas_disponibles = np.zeros(s_act.size)
 huecos_disponibles = s_act - bicicletas_disponibles
+
 coste_minimo = coste_slot(s_act)
-coste_s_act = coste_minimo
 solucion_minima = s_act.copy()
 start_time = time.time()
 
@@ -380,80 +410,103 @@ mejor_vecino = []
 
 
 lista_tabu = []
-longitud_lista_tabu_limite = 2
+longitud_lista_tabu_limite = 4
 duracion = 3
 indice_agregacion = 0
 lista_frecuencias = np.zeros([16,8])
 
 
 
-
-print("##Coste solucion inicial ", coste_s_act)
+print("##Coste solucion inicial ", coste_minimo)
 while iteraciones < 4000:
 
     if iteraciones % 1000 == 0 and iteraciones > 0:
+
+
+
+
         r = random.uniform(0,1)
-        print("segundo")
-        s_act = greddy_tabu(lista_frecuencias)
-        # print(s_act)
-        print(np.array(s_act).sum())
-        # if(r < 0.25):
-        #     # reinicializar completo
-        #     print("primero")
-        #     s_act = greedy_inicializar(16, 220)
-        #     coste_minimo = coste_slot(s_act)
-        #     coste_s_act = coste_minimo
-        # if(r >= 0.25 and r < 0.75):
-        #     print("segundo")
-        #     s_act = greddy_tabu(lista_frecuencias)
-        #     # print(s_act)
-        #     print(np.array(s_act).sum())
-        # if(r >= 0.75):
-        #     print("tercero")
-        #     s_act = solucion_minima.copy()
-        #     coste_minimo = coste_slot(s_act)
-        #     coste_s_act = coste_minimo
+        # reiniciar tamaño lista tabu
+        if(r>0.5):
+            longitud_lista_tabu_limite = longitud_lista_tabu_limite + longitud_lista_tabu_limite/2
+        else:
+            longitud_lista_tabu_limite = longitud_lista_tabu_limite - longitud_lista_tabu_limite / 2
+        longitud_lista_tabu_limite = int(longitud_lista_tabu_limite)
+
+        print("longitud lista tabu " , longitud_lista_tabu_limite)
+        lista_tabu = []
+        if(r < 0.25):
+            # reinicializar completo
+            print("primero")
+            s_act = inicializar_solucion_homogenea(16, 220)
+            coste_minimo = coste_slot(s_act)
+            coste_s_act = coste_minimo
+        if(r >= 0.25 and r < 0.75):
+            # inicio desde lista de frecuencias
+            print("segundo")
+            s_act = greddy_tabu(lista_frecuencias)
+            # print(s_act)
+            print(np.array(s_act).sum())
+        if(r >= 0.75):
+            # inicio desde mejor solucion obtenida
+            print("tercero")
+            s_act = solucion_minima.copy()
+            # coste_minimo = coste_slot(s_act)
+            # coste_s_act = coste_minimo
 
 
     s_act = np.array(s_act)
-    print(s_act)
-    vecinos,movimientos = generar_vecinos_con_offset(s_act,40,2 )
+    vecinos,movimientos = generar_vecinos_con_offset(s_act,40,4)
+
     mejor_vecino = vecinos[0]
     coste_mejor_vecino = coste_slot(mejor_vecino)
-    movimiento_actual = movimientos[0]
 
 
 
     k = 0
     # print("Coste interno iteracion #",iteraciones ,"  " , coste_slot(s_act))
     # print("Lista tabu " , lista_tabu)
-    for v in vecinos:
 
+    for v in vecinos:
+        print("iteacion #",iteraciones , " vecino #",k)
         s_cand = v.copy()
         bicicletas_disponibles = np.zeros(s_cand.size)
         huecos_disponibles = s_cand - bicicletas_disponibles
         coste_cand = coste_slot(s_cand)
+        movimiento_actual = movimientos[k]
 
-        if coste_cand < coste_mejor_vecino:
+
+        if coste_cand < coste_mejor_vecino and not existe_movimiento_tabu(lista_tabu,movimiento_actual):
+            # print("         mejoro coste  y no estoy en lista tabu desde candidato a mejor_vecino ", movimiento_actual)
             coste_mejor_vecino = coste_cand
             mejor_vecino = s_cand.copy()
-            movimiento_actual = movimientos[k]
+            movimiento_actual = movimientos[k].copy()
 
         #criterio de aspiracion, es mejor el vecino que la solucion_mejor,
         # no se tiene en cuenta que estuviera en la lista_tabu no importa
         if coste_cand < coste_minimo:
-            solucion_minima = s_cand.copy()
-            s_act = s_cand.copy()
-            movimiento_actual = movimientos[k].copy()
+
+            mejor_vecino = s_cand.copy()
+            coste_mejor_vecino = coste_cand
+
             # print("         mejoro coste, cumplo criterio de aspiracion", movimiento_actual ,  " coste anterior " , coste_minimo  , " coste " , coste_cand)
+
+            solucion_minima = s_cand.copy()
             coste_minimo = coste_cand
 
-        if not existe_movimiento_tabu(lista_tabu,movimiento_actual):
-            if coste_cand < coste_s_act:
-                # print("         mejoro coste  y no estoy en lista tabu " , movimiento_actual)
-                movimiento_actual = movimientos[k].copy()
-                s_act = s_cand.copy()
+            movimiento_actual = movimientos[k].copy()
+
+
+        # if not existe_movimiento_tabu(lista_tabu,movimiento_actual):
+        #     if coste_cand < coste_s_act:
+        #         print("         mejoro coste  y no estoy en lista tabu " , movimiento_actual)
+        #         movimiento_actual = movimientos[k].copy()
+        #         s_act = s_cand.copy()
         k+=1
+
+    s_act = mejor_vecino.copy()
+
+
     # print("mejor de los vecinos " , mejor_vecino , " mov ",movimiento_actual )
     # print("++agrego en lista tabu++")
 
@@ -461,7 +514,7 @@ while iteraciones < 4000:
     lista_frecuencias = actualizar_tabla_frecuencias(lista_frecuencias,s_act)
     lista_tabu = reducir_tiempo_lista_tabu(lista_tabu)
     iteraciones+=1
-    print("#",iteraciones)
+    # print("#",iteraciones)
 
 print(" solucion mejor " , solucion_minima , " coste ", coste_minimo , "--- %s seconds ---" % (time.time() - start_time))
 

@@ -1,3 +1,4 @@
+import math
 import random
 from builtins import print
 from pickletools import dis
@@ -7,6 +8,8 @@ import numpy as np
 import time
 
 from numpy import genfromtxt
+
+
 
 def modificar_datos_acciones(ficheroAcciones):
 
@@ -21,22 +24,22 @@ def modificar_datos_acciones(ficheroAcciones):
     return salida
 
 #
-def estad_inicial_random():
+def estado_inicial_random():
     random_list = np.random.uniform(0, 1, 16)
 
     for indice in range(16):
         suma = np.array(random_list).sum()
 
-        multiplicador = 219 - suma
+        multiplicador = 218 - suma
         aux = random_list[indice] * multiplicador
 
-        if (aux > 40):
-            aux = np.random.uniform(0, 20, 1)
+        if (aux > 50):
+            aux = np.random.uniform(0, 50, 1)
 
         random_list[indice] = aux
 
     random_list_rounded = np.round(random_list)
-    slot_random = inicializar_greedy(random_list_rounded, 220)
+    slot_random = inicializar_greedy(random_list_rounded, 218)
     return slot_random
 #
 
@@ -47,8 +50,6 @@ def inicializar_greedy(solucionInicial,limite_bicicletas):
 
     solucionInicial = np.array(solucionInicial)
     salida = solucionInicial*multiplicador
-    salida_floor = np.floor(salida)
-    salida_ceil = np.ceil(salida)
 
     salida = np.array(salida).round()
     return salida
@@ -60,7 +61,7 @@ def inicializar_greedy(solucionInicial,limite_bicicletas):
     #     return salida_floor
 
 
-def greedy_inicializar(dimension,limite_elementos):
+def inicializar_solucion_homogenea(dimension,limite_elementos):
 
     arr = np.zeros(dimension)
     for i in range(limite_elementos):
@@ -184,48 +185,64 @@ accionesMod = np.delete(accionesMod, 0, 0)
 lista_acciones = modificar_datos_acciones(accionesMod*2)
 
 numero_semillas = 1
-coste_minimo = 99999999999999999999999999
-start_time = time.time()
+coste_minimo = math.inf
+solucion_minima = []
+
+
 for indice_semilla in range(numero_semillas):
 
-    # [17. 12. 20. 20. 20. 14.  9. 12. 11. 14. 12. 23.  2.  9. 12. 13.]    coste    mejor    369.2210797034451
+    # slot_por_estaciones = inicializar_solucion_homogenea(16,220)
+    # # slot_por_estaciones = estado_inicial_random()
+    # bicicletas_disponibles = np.zeros(slot_por_estaciones.size)
+    #
+    # huecos_disponibles = slot_por_estaciones - bicicletas_disponibles
+    # distanciaTotal = 0
 
-    # slot_por_estaciones = inicializar_greedy([5,7,13,6,8,13,8,9,6,10,10,18,8,13,15,14],220)
-    # bicicletas_disponibles = [5, 7, 13, 6, 8, 13, 8, 9, 6, 10, 10, 18, 8, 13, 15, 14]
+    start_time = time.time()
+    coste_minimo = math.inf
+
+    for repeticiones in range(1):
+
+        # slot_por_estaciones = estado_inicial_random()
+        # slot_por_estaciones = inicializar_greedy(slot_por_estaciones, 220)
 
 
-    # print("saldia ",slot_por_estaciones)
-    slot_por_estaciones = np.array([36,7,16,12,12,5,18,18,11,15,24,23,29,8,36,33])
-    # slot_por_estaciones = greedy_inicializar(16, 220)
-    bicicletas_disponibles = np.zeros(slot_por_estaciones.size)
+        slot_por_estaciones = inicializar_solucion_homogenea(16, 220)
 
-    huecos_disponibles = slot_por_estaciones - bicicletas_disponibles
-    distanciaTotal = 0
 
-    #Ajustamos el vector de slots al primer movimiento que tenemos que cubrir
-    for i in range(np.array(indices).shape[1]):
-        estacion = i
-        bicicletas = bicicletas_objetivo_iniciales[i]
-        out = (accion_posible(bicicletas, estacion))
-        while out != 0:
-            out, estacion_sig, distancia_aux = estacion_cercana(estacion, out)
-            out = (accion_posible(out, estacion_sig))
+        print(np.array(slot_por_estaciones).sum())
+        bicicletas_disponibles = np.zeros(slot_por_estaciones.size)
 
-    for indice in range(np.array(lista_acciones).shape[0]):
-        acc = lista_acciones[indice]
-        estacion = acc[0]
-        bicicletas = acc[1]
-        out = (accion_posible(bicicletas, estacion))
-        while out != 0:
+        huecos_disponibles = slot_por_estaciones - bicicletas_disponibles
 
-            bicis_res, estacion_sig, distancia_aux = estacion_cercana(estacion, out)
-            out = (accion_posible(bicis_res, estacion_sig))
-            tmp = abs(bicis_res) - abs(out)
-            distanciaTotal = distanciaTotal + distancia_aux*tmp
+        solucion_minima = slot_por_estaciones
+        distanciaTotal = 0
 
-    # print(" distancia " , distanciaTotal)
-    if(distanciaTotal < coste_minimo):
-        coste_minimo = distanciaTotal
-    #print("\n semilla #" , indice_semilla, distanciaTotal , slot_por_estaciones)
 
-print(" distancia minima " , coste_minimo , " --- %s seconds ---" % (time.time() - start_time))
+        #Ajustamos el vector de slots al primer movimiento que tenemos que cubrir
+        for i in range(np.array(indices).shape[1]):
+            estacion = i
+            bicicletas = bicicletas_objetivo_iniciales[i]
+            out = (accion_posible(bicicletas, estacion))
+            while out != 0:
+                out, estacion_sig, distancia_aux = estacion_cercana(estacion, out)
+                out = (accion_posible(out, estacion_sig))
+
+        for indice in range(np.array(lista_acciones).shape[0]):
+            acc = lista_acciones[indice]
+            estacion = acc[0]
+            bicicletas = acc[1]
+            out = (accion_posible(bicicletas, estacion))
+            while out != 0:
+
+                bicis_res, estacion_sig, distancia_aux = estacion_cercana(estacion, out)
+                out = (accion_posible(bicis_res, estacion_sig))
+                tmp = abs(bicis_res) - abs(out)
+                distanciaTotal = distanciaTotal + distancia_aux*tmp
+
+        if(distanciaTotal < coste_minimo):
+            coste_minimo = distanciaTotal
+            solucion_minima = slot_por_estaciones
+        # print("\n  semilla @"  ,indice_semilla  ," repeticion#" , repeticiones, distanciaTotal , slot_por_estaciones)
+    print("Sol #", indice_semilla , " ", solucion_minima, " distancia minima ", coste_minimo, "suma ", np.array(slot_por_estaciones).sum()," --- %s seconds ---" % (time.time() - start_time))
+# print( "Sol " ,solucion_minima ," distancia minima " , coste_minimo ,    "suma "  , np.array(slot_por_estaciones).sum()  ,    " --- %s seconds ---" % (time.time() - start_time))

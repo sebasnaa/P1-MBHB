@@ -1,4 +1,5 @@
 import itertools
+import math
 
 import numpy as np
 import random
@@ -178,12 +179,16 @@ def generar_vecinos_con_offset(solucion_actual, limite_vecinos, granularidad):
         if aux[indiceA] > granularidad:
             aux[indiceA] -= granularidad
             aux[indiceB] += granularidad
+            i += 1
+            vecinos_generados.append(aux)
         elif aux[indiceB] > granularidad:
             aux[indiceA] += granularidad
             aux[indiceB] -= granularidad
+            i += 1
+            vecinos_generados.append(aux)
+        else:
+            i += 1
 
-        vecinos_generados.append(aux)
-        i += 1
         if i == tam:
             break
     return vecinos_generados
@@ -209,14 +214,25 @@ def generar_vecinos_con_offset_punto(solucion_actual, limite_vecinos, granularid
         if aux[indiceA] > granularidad:
             aux[indiceA] -= granularidad
             aux[indiceB] += granularidad
+            i = i + 1
+            i = i % 240
+            contador += 1
+            vecinos_generados.append(aux)
         elif aux[indiceB] > granularidad:
             aux[indiceA] += granularidad
             aux[indiceB] -= granularidad
+            i = i + 1
+            i = i % 240
+            contador += 1
+            vecinos_generados.append(aux)
+        else:
+            i = i + 1
+            i = i % 240
 
-        vecinos_generados.append(aux)
-        i = i + 1
-        i = i % 240
-        contador+=1
+        # vecinos_generados.append(aux)
+        # i = i + 1
+        # i = i % 240
+        # contador+=1
     return vecinos_generados
 
 def generar_vecinos_random(slots,valor_cambio):
@@ -291,28 +307,38 @@ accionesMod = np.delete(accionesMod, 0, 0)
 
 lista_acciones = modificar_datos_acciones(accionesMod*2)
 
-coste_maximo = 99999999999999999
+coste_minimo = 99999999999999999
 
 mejor_slot = []
-for indice_semilla in range(200):
 
-    # slot_por_estaciones = inicializar_greedy([5, 7, 13, 6, 8, 13, 8, 9, 6, 10, 10, 18, 8, 13, 15, 14], 220)
-    # bicicletas_disponibles = [5, 7, 13, 6, 8, 13, 8, 9, 6, 10, 10, 18, 8, 13, 15, 14]
+
+seeds = [
+[33,  8,  0, 51, 41,  6, 28, 44,  2,  1,  2,  1,  1,  0,  1,  1,],
+[ 3, 40, 22, 48, 49, 23, 22, 10,  0,  1,  0,  1,  0,  0,  1,  0,],
+[32,  9,  9,  9,  9, 16, 17, 13, 13, 16,  6, 13, 19, 10, 15, 14,],
+[26, 17, 11, 11, 10, 15, 13, 19,  9,  6, 13, 15, 17, 12, 12, 14,],
+[36, 10, 13, 16, 15, 10, 12, 11, 14, 12, 12, 16,  7, 12, 16,  8,]
+]
+
+
+for indice_semilla in range(5):
+
+    numero_evaluaciones = 0
+    coste_minimo = math.inf
+
     ################## Inicializar variables bucles
     iteraciones = 0
     #Se genera la solucion actual inicial
-    # slot_por_estaciones = np.array([39, 25, 10, 14, 10, 11, 4, 5, 14, 8, 25, 27, 2, 9, 6, 11])
-    # slot_por_estaciones = np.array([17, 12, 20, 20, 20, 14, 9, 12, 11, 14, 12, 23, 2, 9, 12, 13])
+    print(np.array(seeds[4]).sum())
+    slot_por_estaciones = np.array(seeds[4])
 
-    slot_por_estaciones = estado_inicial_random()
-    print( " suma " , np.array(slot_por_estaciones).sum())
-    np.random.shuffle(slot_por_estaciones)
+    # slot_por_estaciones = estado_inicial_random()
+    # np.random.shuffle(slot_por_estaciones)
 
     bicicletas_disponibles = np.zeros(slot_por_estaciones.size)
     huecos_disponibles = slot_por_estaciones - bicicletas_disponibles
     coste_mejor = coste_slot(slot_por_estaciones)
-    print(" coste asdas ",coste_mejor)
-    print("#",indice_semilla , " " , slot_por_estaciones , " coste ", coste_mejor)
+
     no_encuentra = False
     mejora = False
     start_time = time.time()
@@ -320,7 +346,10 @@ for indice_semilla in range(200):
     r = random.randint(0, 240)
     offset = r % 240
 
+
     k = 0
+
+    print("Coste inicial ", coste_slot(slot_por_estaciones))
     while not no_encuentra and iteraciones < 3000:
         # print(" iteraccion #",iteraciones)
         # vecinos = generar_vecinos_no_offset(slot_por_estaciones,120,2)
@@ -332,35 +361,37 @@ for indice_semilla in range(200):
             aux = v.copy()
             bicicletas_disponibles = np.zeros(aux.size)
             huecos_disponibles = aux - bicicletas_disponibles
-            coste_tmp = coste_slot(aux)
+            coste_scand = coste_slot(aux)
             vecinos_totales -= 1
             mejora = False
-            if coste_tmp < coste_mejor:
+
+            numero_evaluaciones+= 1
+            if coste_scand < coste_mejor:
                 k += 1
                 slot_por_estaciones = aux.copy()
-                coste_mejor = coste_tmp
+                coste_mejor = coste_scand
                 r = random.randint(0, 240)
                 offset = r
-                # print("Encuentra mejor en " ,k, " ,reinicio , nuevo random " , offset , " vecinos restante ", vecinos_totales)
+                # Encuentro uno mejor reinicio el contador de vecinos de esta nueva solucion que mejora
                 vecinos_totales = 240
                 mejora = True
-                if coste_mejor < coste_maximo:
-                    coste_maximo = coste_mejor
+                if coste_mejor < coste_minimo:
+                    coste_minimo = coste_mejor
                     mejor_slot = slot_por_estaciones.copy()
-                break
+
 
             if vecinos_totales == 0:
-                    # print(" llega limite")
-                    no_encuentra = True
+                # Llega al limite de vecinios establecidos para comproabr y buscar mejora, al no encontrar salimos de las comprobaciones y nos quedamos con
+                # el mejor hasta el momento
+                no_encuentra = True
         iteraciones+=1
         if not mejora:
             offset+= lotes_size
             mejora = False
 
     print(slot_por_estaciones , "coste mejor ",coste_mejor ,  " mejoras " , k    ," " , "--- %s seconds ---" % (time.time() - start_time))
-
-
-print(mejor_slot," coste maximo " , coste_maximo , " " , np.array(mejor_slot).sum())
+    print("evaluaciones ", numero_evaluaciones)
+print(mejor_slot," coste maximo " , coste_minimo , " suma slots" , np.array(mejor_slot).sum())
 
 
 
